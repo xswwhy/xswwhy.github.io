@@ -4,15 +4,17 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="调度器GMP原理, xswwhy">
-    <meta name="description" content="Golang调度器GMP原理与分析单进程时代早期的操作系统是单进程的,多个进程挨个执行,不需要调度器
-这个时候的操作系统存在的问题:
+    <meta name="keywords" content="聚类, xswwhy">
+    <meta name="description" content="聚类首先明确分类与聚类的区别,他们两者之间最大的区别就是分类问题的数据是有label的,而聚类的数据集没有label
+下面主要介绍三种分类算法
 
-执行流程单一,进程只能一个接一个串行执行
-当前执行进程阻塞时,CPU只能等着,浪费CPU
+K-Means
+层次聚类
+密度聚类
 
+K-Meansk-means聚类算法的分析流程
 
-">
+确定K">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="renderer" content="webkit|ie-stand|ie-comp">
@@ -24,7 +26,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>调度器GMP原理 | xswwhy</title>
+    <title>聚类 | xswwhy</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.min.css">
@@ -316,12 +318,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/4.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/9.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">调度器GMP原理</h1>
+                    <h1 class="description center-align post-title">聚类</h1>
                 </div>
             </div>
         </div>
@@ -445,8 +447,8 @@
                     <div class="post-cate">
                         <i class="fas fa-bookmark fa-fw icon-category"></i>
                         
-                            <a href="/categories/golang/" class="post-category">
-                                golang
+                            <a href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" class="post-category">
+                                机器学习
                             </a>
                         
                     </div>
@@ -458,7 +460,7 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
-                    2021-12-30
+                    2022-03-03
                 </div>
                 
 
@@ -482,13 +484,155 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <h1 id="Golang调度器GMP原理与分析"><a href="#Golang调度器GMP原理与分析" class="headerlink" title="Golang调度器GMP原理与分析"></a>Golang调度器GMP原理与分析</h1><h1 id="单进程时代"><a href="#单进程时代" class="headerlink" title="单进程时代"></a>单进程时代</h1><p>早期的操作系统是单进程的,多个进程挨个执行,不需要调度器</p>
-<p>这个时候的操作系统存在的问题:</p>
+                <h1 id="聚类"><a href="#聚类" class="headerlink" title="聚类"></a>聚类</h1><p>首先明确分类与聚类的区别,他们两者之间最大的区别就是分类问题的数据是有label的,而聚类的数据集没有label</p>
+<p>下面主要介绍三种分类算法</p>
+<ul>
+<li>K-Means</li>
+<li>层次聚类</li>
+<li>密度聚类</li>
+</ul>
+<h2 id="K-Means"><a href="#K-Means" class="headerlink" title="K-Means"></a>K-Means</h2><p>k-means聚类算法的分析流程</p>
 <ol>
-<li>执行流程单一,进程只能一个接一个串行执行</li>
-<li>当前执行进程阻塞时,CPU只能等着,浪费CPU</li>
+<li><p>确定K值，即将数据集聚集成K个类簇或小组</p>
+</li>
+<li><p>从数据集中随机选择K个数据点作为质心（Centroid）或数据中心</p>
+</li>
+<li><p>分别计算每个点到每个质心之间的距离，并将每个点划分到离最近质心的小组</p>
+</li>
+<li><p>当每个质心都聚集了一些点后，重新定义算法选出新的质心。（对于每个簇，计</p>
+<p>算其均值，即得到新的k个质心点）</p>
+</li>
+<li><p>迭代执行第三步到第四步，直到迭代终止条件满足为止（聚类结果不再变化）</p>
+</li>
 </ol>
-<p><img src="/2021/12/30/%E8%B0%83%E5%BA%A6%E5%99%A8GMP%E5%8E%9F%E7%90%86/blog\source_posts\调度器GMP原理\单进程.png"></p>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt
+<span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>cluster <span class="token keyword">import</span> KMeans
+
+<span class="token triple-quoted-string string">'''
+第一列表示球员每分钟助攻数：assists_per_minute
+第二列表示球员每分钟得分数：points_per_minute
+'''</span>
+X <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">0.0888</span><span class="token punctuation">,</span> <span class="token number">0.5885</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+     <span class="token punctuation">[</span><span class="token number">0.1399</span><span class="token punctuation">,</span> <span class="token number">0.8291</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+     <span class="token punctuation">[</span><span class="token number">0.0747</span><span class="token punctuation">,</span> <span class="token number">0.4974</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+     <span class="token punctuation">[</span><span class="token number">0.0983</span><span class="token punctuation">,</span> <span class="token number">0.5772</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+     <span class="token punctuation">[</span><span class="token number">0.1276</span><span class="token punctuation">,</span> <span class="token number">0.5703</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+     <span class="token punctuation">[</span><span class="token number">0.1671</span><span class="token punctuation">,</span> <span class="token number">0.5835</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+     <span class="token punctuation">[</span><span class="token number">0.1306</span><span class="token punctuation">,</span> <span class="token number">0.5276</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+     <span class="token punctuation">[</span><span class="token number">0.1061</span><span class="token punctuation">,</span> <span class="token number">0.5523</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+     <span class="token punctuation">[</span><span class="token number">0.2446</span><span class="token punctuation">,</span> <span class="token number">0.4007</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+     <span class="token punctuation">[</span><span class="token number">0.1670</span><span class="token punctuation">,</span> <span class="token number">0.4770</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+     <span class="token punctuation">[</span><span class="token number">0.2485</span><span class="token punctuation">,</span> <span class="token number">0.4313</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+     <span class="token punctuation">[</span><span class="token number">0.1227</span><span class="token punctuation">,</span> <span class="token number">0.4909</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+     <span class="token punctuation">[</span><span class="token number">0.1240</span><span class="token punctuation">,</span> <span class="token number">0.5668</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+     <span class="token punctuation">[</span><span class="token number">0.1461</span><span class="token punctuation">,</span> <span class="token number">0.5113</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+     <span class="token punctuation">[</span><span class="token number">0.2315</span><span class="token punctuation">,</span> <span class="token number">0.3788</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+     <span class="token punctuation">[</span><span class="token number">0.0494</span><span class="token punctuation">,</span> <span class="token number">0.5590</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+     <span class="token punctuation">[</span><span class="token number">0.1107</span><span class="token punctuation">,</span> <span class="token number">0.4799</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+     <span class="token punctuation">[</span><span class="token number">0.1121</span><span class="token punctuation">,</span> <span class="token number">0.5735</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+     <span class="token punctuation">[</span><span class="token number">0.1007</span><span class="token punctuation">,</span> <span class="token number">0.6318</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+     <span class="token punctuation">[</span><span class="token number">0.2567</span><span class="token punctuation">,</span> <span class="token number">0.4326</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+     <span class="token punctuation">[</span><span class="token number">0.1956</span><span class="token punctuation">,</span> <span class="token number">0.4280</span><span class="token punctuation">]</span>
+     <span class="token punctuation">]</span>
+
+<span class="token comment"># 分几类是根据经验和实验设定的</span>
+k_means <span class="token operator">=</span> KMeans<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>
+result <span class="token operator">=</span> k_means<span class="token punctuation">.</span>fit_predict<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+
+x1 <span class="token operator">=</span> <span class="token punctuation">[</span>n<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token keyword">for</span> n <span class="token keyword">in</span> X<span class="token punctuation">]</span>
+x2 <span class="token operator">=</span> <span class="token punctuation">[</span>n<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token keyword">for</span> n <span class="token keyword">in</span> X<span class="token punctuation">]</span>
+
+<span class="token comment"># show</span>
+plt<span class="token punctuation">.</span>scatter<span class="token punctuation">(</span>x1<span class="token punctuation">,</span> x2<span class="token punctuation">,</span> c<span class="token operator">=</span>result<span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><img src="/2022/03/03/%E8%81%9A%E7%B1%BB/result1.png"></p>
+<h2 id="层次聚类"><a href="#层次聚类" class="headerlink" title="层次聚类"></a>层次聚类</h2><p>与<code>K-Means</code>不同的是,K-Means需要提前设置分类数量,也就是<code>K值</code>,而层次聚类不需要</p>
+<p>层次聚类其实很简单,就是找最近的(欧式距离)两个数据,两两组合,组合后的数据看做是一个数据,不停的两两组合,直到所有数据变为一类,所以不难想到,在数据量较大是,层次聚类非常耗时</p>
+<p>具体流程:</p>
+<ol>
+<li><p>将每个对象看作一类，计算两两之间的最小距离</p>
+</li>
+<li><p>将距离最小的两个类合并成一个新类</p>
+</li>
+<li><p>重新计算新类与所有类之间的距离</p>
+</li>
+<li><p>重复(2)、(3)，直到所有类最后合并成一类</p>
+</li>
+</ol>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">from</span> scipy<span class="token punctuation">.</span>cluster<span class="token punctuation">.</span>hierarchy <span class="token keyword">import</span> dendrogram<span class="token punctuation">,</span> linkage
+<span class="token keyword">from</span> matplotlib <span class="token keyword">import</span> pyplot <span class="token keyword">as</span> plt
+
+X <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">]</span>
+<span class="token triple-quoted-string string">'''
+这里直接就出结果了
+算类簇与类簇之间距离的时候:
+single: 看最近的
+complete:看最远的
+ward:离差平方和
+'''</span>
+Z <span class="token operator">=</span> linkage<span class="token punctuation">(</span>X<span class="token punctuation">,</span> <span class="token string">'single'</span><span class="token punctuation">)</span>
+
+<span class="token comment"># show</span>
+fig <span class="token operator">=</span> plt<span class="token punctuation">.</span>figure<span class="token punctuation">(</span>figsize<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+dn <span class="token operator">=</span> dendrogram<span class="token punctuation">(</span>Z<span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><img src="/2022/03/03/%E8%81%9A%E7%B1%BB/result2.png"></p>
+<p>层次聚类最大的优点在于,不同分类数量的结果能直接在图中显示</p>
+<h2 id="密度聚类"><a href="#密度聚类" class="headerlink" title="密度聚类"></a>密度聚类</h2><p>需要两个参数：ε (eps) 和形成高密度区域所需要的最少点数 (minPts)</p>
+<ul>
+<li>它由一个任意未被访问的点开始，然后探索这个点的 ε-邻域，如果 ε-邻域里有足够的点，则建立一</li>
+</ul>
+<p>个新的聚类，否则这个点被标签为杂音。</p>
+<ul>
+<li>注意，这个杂音点之后可能被发现在其它点的 ε-邻域里，而该 ε-邻域可能有足够的点，届时这个点</li>
+</ul>
+<p>会被加入该聚类中</p>
+<p><strong>优点：</strong></p>
+<ol>
+<li><p> 对噪声不敏感；</p>
+</li>
+<li><p>能发现任意形状的聚类。</p>
+</li>
+</ol>
+<p><strong>缺点：</strong></p>
+<ol>
+<li><p> 聚类的结果与参数有很大的关系；</p>
+</li>
+<li><p>用固定参数识别聚类，但当聚类的稀疏程度不同时，相同的判定标准可能会破坏聚类的自然结构，</p>
+</li>
+</ol>
+<p>即较稀的聚类会被划分为多个类或密度较大且离得较近的类会被合并成一个聚类。</p>
+<pre class="line-numbers language-none"><code class="language-none">from matplotlib import pyplot as plt
+from sklearn import datasets
+from sklearn.cluster import DBSCAN
+
+iris &#x3D; datasets.load_iris()
+iris &#x3D; iris.data
+&#39;&#39;&#39;
+密度聚类只要看着两个参数:
+eps:选取类簇的最大距离,超高该值,就认为不属于该类簇
+min_samples:成为类簇的最小样本数
+&#39;&#39;&#39;
+dbscan &#x3D; DBSCAN(eps&#x3D;0.4, min_samples&#x3D;9)
+dbscan.fit(iris)
+result &#x3D; dbscan.labels_
+
+# show
+&#39;&#39;&#39;
+这里我们已经看了结果有三类才这样写的,在实际应用中,分类结果往往是不确定的
+一般根据实验和经验,再结合应用场景,调整 DBSCAN中的eps 和 min_samples 以达到我们的预期
+&#39;&#39;&#39;
+x0 &#x3D; iris[result &#x3D;&#x3D; 0]
+x1 &#x3D; iris[result &#x3D;&#x3D; 1]
+x2 &#x3D; iris[result &#x3D;&#x3D; 2]
+plt.scatter(x0[:, 0], x0[:, 1], c&#x3D;&quot;r&quot;)
+plt.scatter(x1[:, 0], x1[:, 1], c&#x3D;&quot;g&quot;)
+plt.scatter(x2[:, 0], x2[:, 1], c&#x3D;&quot;b&quot;)
+plt.show()<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><img src="/2022/03/03/%E8%81%9A%E7%B1%BB/result3.png"></p>
 
                 
             </div>
@@ -515,7 +659,7 @@
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="https://xswwhy.github.io/2021/12/30/%E8%B0%83%E5%BA%A6%E5%99%A8GMP%E5%8E%9F%E7%90%86/">https://xswwhy.github.io/2021/12/30/%E8%B0%83%E5%BA%A6%E5%99%A8GMP%E5%8E%9F%E7%90%86/</a>
+                    <a href="https://xswwhy.github.io/2022/03/03/%E8%81%9A%E7%B1%BB/">https://xswwhy.github.io/2022/03/03/%E8%81%9A%E7%B1%BB/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -600,13 +744,13 @@
             <div class="article-badge left-badge text-color">
                 <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2022/01/04/pip/">
+                <a href="/2022/03/03/%E9%99%8D%E7%BB%B4/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/23.jpg" class="responsive-img" alt="pip">
+                        <img src="/medias/featureimages/15.jpg" class="responsive-img" alt="降维">
                         
-                        <span class="card-title">pip</span>
+                        <span class="card-title">降维</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -617,14 +761,14 @@
                     </div>
                     <div class="publish-info">
                         <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2022-01-04
+                            <i class="far fa-clock fa-fw icon-date"></i>2022-03-03
                         </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/python/" class="post-category">
-                                    python
+                            <a href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" class="post-category">
+                                    机器学习
                                 </a>
                             
                             
@@ -641,13 +785,13 @@
                 下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/2021/12/16/hexo%E4%B8%AD%E7%9A%84%E8%A7%86%E9%A2%91%E6%97%A0%E6%B3%95%E6%92%AD%E6%94%BE/">
+                <a href="/2022/02/24/python%E4%BB%A3%E7%A0%81%E7%9A%84%E7%BC%96%E8%AF%91%E4%B8%8E%E6%89%93%E5%8C%85/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="hexo中的视频无法播放">
+                        <img src="/medias/featureimages/3.jpg" class="responsive-img" alt="python代码的编译与打包">
                         
-                        <span class="card-title">hexo中的视频无法播放</span>
+                        <span class="card-title">python代码的编译与打包</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -658,14 +802,14 @@
                     </div>
                     <div class="publish-info">
                             <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2021-12-16
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-02-24
                             </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/hexo/" class="post-category">
-                                    hexo
+                            <a href="/categories/python/" class="post-category">
+                                    python
                                 </a>
                             
                             

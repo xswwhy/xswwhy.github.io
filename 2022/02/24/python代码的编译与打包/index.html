@@ -4,15 +4,9 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="调度器GMP原理, xswwhy">
-    <meta name="description" content="Golang调度器GMP原理与分析单进程时代早期的操作系统是单进程的,多个进程挨个执行,不需要调度器
-这个时候的操作系统存在的问题:
-
-执行流程单一,进程只能一个接一个串行执行
-当前执行进程阻塞时,CPU只能等着,浪费CPU
-
-
-">
+    <meta name="keywords" content="python代码的编译与打包, xswwhy">
+    <meta name="description" content="python代码的编译与打包本文主要记录使用Cython setuptools wheel工具对python代码进行编译打包
+如果我们现在写了一个python库,想拿给别人用,但是我们又不希望别人看见源码,那我们可以对python代码进行编">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="renderer" content="webkit|ie-stand|ie-comp">
@@ -24,7 +18,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>调度器GMP原理 | xswwhy</title>
+    <title>python代码的编译与打包 | xswwhy</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.min.css">
@@ -316,12 +310,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/4.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/3.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">调度器GMP原理</h1>
+                    <h1 class="description center-align post-title">python代码的编译与打包</h1>
                 </div>
             </div>
         </div>
@@ -445,8 +439,8 @@
                     <div class="post-cate">
                         <i class="fas fa-bookmark fa-fw icon-category"></i>
                         
-                            <a href="/categories/golang/" class="post-category">
-                                golang
+                            <a href="/categories/python/" class="post-category">
+                                python
                             </a>
                         
                     </div>
@@ -458,7 +452,7 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
-                    2021-12-30
+                    2022-02-24
                 </div>
                 
 
@@ -482,13 +476,80 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <h1 id="Golang调度器GMP原理与分析"><a href="#Golang调度器GMP原理与分析" class="headerlink" title="Golang调度器GMP原理与分析"></a>Golang调度器GMP原理与分析</h1><h1 id="单进程时代"><a href="#单进程时代" class="headerlink" title="单进程时代"></a>单进程时代</h1><p>早期的操作系统是单进程的,多个进程挨个执行,不需要调度器</p>
-<p>这个时候的操作系统存在的问题:</p>
-<ol>
-<li>执行流程单一,进程只能一个接一个串行执行</li>
-<li>当前执行进程阻塞时,CPU只能等着,浪费CPU</li>
-</ol>
-<p><img src="/2021/12/30/%E8%B0%83%E5%BA%A6%E5%99%A8GMP%E5%8E%9F%E7%90%86/blog\source_posts\调度器GMP原理\单进程.png"></p>
+                <h1 id="python代码的编译与打包"><a href="#python代码的编译与打包" class="headerlink" title="python代码的编译与打包"></a>python代码的编译与打包</h1><p>本文主要记录使用<code>Cython</code> <code>setuptools</code> <code>wheel</code>工具对python代码进行编译打包</p>
+<p>如果我们现在写了一个python库,想拿给别人用,但是我们又不希望别人看见源码,那我们可以对python代码进行编译,编译成windows后缀为<code>.pyd</code>,linux平台后缀为<code>.so</code>的动态库</p>
+<p>编译好的代码打个包,为了方便其他人使用,也方便自己做版本管理</p>
+<h2 id="python代码编译"><a href="#python代码编译" class="headerlink" title="python代码编译"></a>python代码编译</h2><p>我们先看一下原始目录结构</p>
+<p><img src="/2022/02/24/python%E4%BB%A3%E7%A0%81%E7%9A%84%E7%BC%96%E8%AF%91%E4%B8%8E%E6%89%93%E5%8C%85/%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84.png"></p>
+<p>这个包里面都是python文件,还有一些简单的配置文件.我们主要关注<code>py2c.py</code>文件,这个脚本主要完成编程操作</p>
+<p>代码内容比较简单,扫描当前文件夹下面的所有py文件,启动多线程完成编译</p>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">import</span> os
+<span class="token keyword">import</span> threading
+
+<span class="token keyword">from</span> setuptools <span class="token keyword">import</span> setup
+<span class="token keyword">from</span> Cython<span class="token punctuation">.</span>Build <span class="token keyword">import</span> cythonize
+
+<span class="token keyword">def</span> <span class="token function">build</span><span class="token punctuation">(</span>file_path<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    setup<span class="token punctuation">(</span>
+        name<span class="token operator">=</span><span class="token string">'hlapi'</span><span class="token punctuation">,</span>
+        ext_modules<span class="token operator">=</span>cythonize<span class="token punctuation">(</span>file_path<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">)</span>
+
+<span class="token builtin">all</span> <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+g <span class="token operator">=</span> os<span class="token punctuation">.</span>walk<span class="token punctuation">(</span>os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>dirname<span class="token punctuation">(</span>__file__<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> path<span class="token punctuation">,</span> dir_list<span class="token punctuation">,</span> file_list <span class="token keyword">in</span> g<span class="token punctuation">:</span>
+    <span class="token keyword">for</span> file_name <span class="token keyword">in</span> file_list<span class="token punctuation">:</span>
+        file_path <span class="token operator">=</span> os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>join<span class="token punctuation">(</span>path<span class="token punctuation">,</span> file_name<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token builtin">str</span><span class="token punctuation">.</span>endswith<span class="token punctuation">(</span>file_path<span class="token punctuation">,</span> <span class="token string">".py"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            t <span class="token operator">=</span> threading<span class="token punctuation">.</span>Thread<span class="token punctuation">(</span>target<span class="token operator">=</span>build<span class="token punctuation">,</span> args<span class="token operator">=</span><span class="token punctuation">(</span>file_path<span class="token punctuation">,</span><span class="token punctuation">)</span><span class="token punctuation">,</span> daemon<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+            t<span class="token punctuation">.</span>start<span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token builtin">all</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>t<span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> t <span class="token keyword">in</span> <span class="token builtin">all</span><span class="token punctuation">:</span>
+    t<span class="token punctuation">.</span>join<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>启动脚本</p>
+<pre class="line-numbers language-shell" data-language="shell"><code class="language-shell">python py2c.py build_ext --inplace<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>运行完了会多出来一个<code>build</code>目录,该目录下都是编译好的<code>.pyd</code>文件</p>
+<p><img src="/2022/02/24/python%E4%BB%A3%E7%A0%81%E7%9A%84%E7%BC%96%E8%AF%91%E4%B8%8E%E6%89%93%E5%8C%85/%E7%BC%96%E8%AF%91%E5%90%8E.png"></p>
+<h2 id="python打包"><a href="#python打包" class="headerlink" title="python打包"></a>python打包</h2><p>我们把编译好的<code>.pyd</code>文件和配置文件都整理好,这里我是手动整理的,在实际生产环境编译和打包会放在一个脚本里面,目录里面的文件也是自动整理的,不过这不是本文的重点,那些整理的代码基本上也就是文件的拷贝和移动,把一些不要的文件删除而已</p>
+<p>我们看一下整理后的目录结构,所有py文件都变成pyd文件了,配置文件不变</p>
+<p><img src="/2022/02/24/python%E4%BB%A3%E7%A0%81%E7%9A%84%E7%BC%96%E8%AF%91%E4%B8%8E%E6%89%93%E5%8C%85/%E6%89%93%E5%8C%85.png"></p>
+<p>在包外层目录建一个<code>setup.py</code></p>
+<p><img src="/2022/02/24/python%E4%BB%A3%E7%A0%81%E7%9A%84%E7%BC%96%E8%AF%91%E4%B8%8E%E6%89%93%E5%8C%85/setup.png"></p>
+<p>接下来看一下<code>setup.py</code>里面的代码,主要都是填一些配置</p>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">from</span> setuptools <span class="token keyword">import</span> setup
+
+setup<span class="token punctuation">(</span>name<span class="token operator">=</span><span class="token string">'hlapi'</span><span class="token punctuation">,</span>
+      version<span class="token operator">=</span><span class="token string">'1.0.0'</span><span class="token punctuation">,</span>
+      description<span class="token operator">=</span><span class="token string">'统一组件开发 弘连api'</span><span class="token punctuation">,</span>
+      author<span class="token operator">=</span><span class="token string">'xiashiwei'</span><span class="token punctuation">,</span>
+      author_email<span class="token operator">=</span><span class="token string">'xiashiwei@forensix.cn'</span><span class="token punctuation">,</span>
+      url<span class="token operator">=</span><span class="token string">'https://forensix.cn/'</span><span class="token punctuation">,</span>
+      packages<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">'build'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+      install_requires<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">'psutil'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+      python_requires<span class="token operator">=</span><span class="token string">'>=3.6'</span><span class="token punctuation">,</span>
+      include_package_data<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+      <span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这里如果直接启动脚本的话,能正常生成<code>whl文件</code>,但是使用<code>whl文件</code>的时候你会发现里面没有你想要的代码</p>
+<p>所以在上面<code>setup</code>里面需要添加<code>include_package_data=True</code></p>
+<p>与<code>setup.py</code>同级目录创建一个<code>MANIFEST.in</code>文件</p>
+<p><img src="/2022/02/24/python%E4%BB%A3%E7%A0%81%E7%9A%84%E7%BC%96%E8%AF%91%E4%B8%8E%E6%89%93%E5%8C%85/%E9%85%8D%E7%BD%AE.png"></p>
+<p>该文件里面描述需要打包进去的文件,我这里需要把所有<code>.pyd</code> <code>.json</code>文件打包进去,所以<code>MANIFEST.in</code>文件里面写的</p>
+<pre class="line-numbers language-shell" data-language="shell"><code class="language-shell">recursive-include hlapi *.json
+recursive-include hlapi *.pyd<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>装一下wheel(装过这个包的忽略)</p>
+<pre class="line-numbers language-shell" data-language="shell"><code class="language-shell">pip install wheel<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>最后我们就可以启动脚本了</p>
+<pre class="line-numbers language-shell" data-language="shell"><code class="language-shell">python setup.py bdist_wheel<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>我们想要的东西就在<code>dist</code>目录下面</p>
+<p><img src="/2022/02/24/python%E4%BB%A3%E7%A0%81%E7%9A%84%E7%BC%96%E8%AF%91%E4%B8%8E%E6%89%93%E5%8C%85/whl.png"></p>
 
                 
             </div>
@@ -505,7 +566,7 @@
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="/about" rel="external nofollow noreferrer">xswwhy</a>
+                    <a href="/about" rel="external nofollow noreferrer">xswwh</a>
                 </span>
             </div>
             <div class="reprint__type">
@@ -515,7 +576,7 @@
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="https://xswwhy.github.io/2021/12/30/%E8%B0%83%E5%BA%A6%E5%99%A8GMP%E5%8E%9F%E7%90%86/">https://xswwhy.github.io/2021/12/30/%E8%B0%83%E5%BA%A6%E5%99%A8GMP%E5%8E%9F%E7%90%86/</a>
+                    <a href="https://xswwhy.github.io/2022/02/24/python%E4%BB%A3%E7%A0%81%E7%9A%84%E7%BC%96%E8%AF%91%E4%B8%8E%E6%89%93%E5%8C%85/">https://xswwhy.github.io/2022/02/24/python%E4%BB%A3%E7%A0%81%E7%9A%84%E7%BC%96%E8%AF%91%E4%B8%8E%E6%89%93%E5%8C%85/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -528,7 +589,7 @@
                     本博客所有文章除特別声明外，均采用
                     <a href="https://creativecommons.org/licenses/by/4.0/deed.zh" rel="external nofollow noreferrer" target="_blank">CC BY 4.0</a>
                     许可协议。转载请注明来源
-                    <a href="/about" target="_blank">xswwhy</a>
+                    <a href="/about" target="_blank">xswwh</a>
                     !
                 </span>
             </div>
@@ -600,13 +661,13 @@
             <div class="article-badge left-badge text-color">
                 <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2022/01/04/pip/">
+                <a href="/2022/03/03/%E8%81%9A%E7%B1%BB/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/23.jpg" class="responsive-img" alt="pip">
+                        <img src="/medias/featureimages/9.jpg" class="responsive-img" alt="聚类">
                         
-                        <span class="card-title">pip</span>
+                        <span class="card-title">聚类</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -617,14 +678,14 @@
                     </div>
                     <div class="publish-info">
                         <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2022-01-04
+                            <i class="far fa-clock fa-fw icon-date"></i>2022-03-03
                         </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/python/" class="post-category">
-                                    python
+                            <a href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" class="post-category">
+                                    机器学习
                                 </a>
                             
                             
@@ -641,13 +702,13 @@
                 下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/2021/12/16/hexo%E4%B8%AD%E7%9A%84%E8%A7%86%E9%A2%91%E6%97%A0%E6%B3%95%E6%92%AD%E6%94%BE/">
+                <a href="/2022/01/10/%E5%88%86%E5%B8%83%E5%BC%8F-%E4%B8%80-%E5%8D%8F%E8%B0%83%E4%B8%8E%E5%90%8C%E6%AD%A5/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="hexo中的视频无法播放">
+                        <img src="/medias/featureimages/4.jpg" class="responsive-img" alt="分布式(一)协调与同步">
                         
-                        <span class="card-title">hexo中的视频无法播放</span>
+                        <span class="card-title">分布式(一)协调与同步</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -658,14 +719,14 @@
                     </div>
                     <div class="publish-info">
                             <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2021-12-16
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-01-10
                             </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/hexo/" class="post-category">
-                                    hexo
+                            <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/" class="post-category">
+                                    分布式
                                 </a>
                             
                             
